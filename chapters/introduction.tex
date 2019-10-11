@@ -1,37 +1,74 @@
-The breakthroughs in hierarchical reinforcement learning (HRL) at the beginning of the last decade have promised to propel the field to new levels. Its development has however been hindered by an easily explainable, but yet challenging problem: how can temporal abstractions be discovered automatically ? It is the ``elephant in the room'' for HRL which, despite much effort, remains unsolved. The existence of this problem has been acknowledged by many authors. In \cite{Dietterich2000}, the author of the \textsc{MAXQ} framework  goes as far as qualifying it as being the ``biggest open problem'' in HRL. Lacking automatic methods for decomposing the problem structure into simpler sub-problems, hierarchical approaches are of limited interest as the effort for manually specifying them can quickly become insurmountable. \cite{Hengst2002} even refers to manual problem decomposition as being an ``art-form'' .
+Extractive summarization remains a simple 
+and fast approach to produce summaries which 
+are grammatical and accurately represent the source text.
+In the news domain, these systems are able to 
+use a dominant signal: the position of a sentence 
+in the source document. 
+Due to journalistic conventions which place important information
+early in the articles, the lead sentences often contain key information. In this paper, we explore how systems can look beyond this simple trend. 
 
-The bottleneck concept arose early in the field of HRL as an intuitive response to this issue. Bottlenecks have been defined as those states which appear frequently on successful trajectories to a goal but not on unsuccessful ones \parencite{Mcgovern2001, Stolle2002} or as nodes which allow for densely connected regions of the interaction graph to reach other such regions \parencite{Menache2002, Simsek2004, Kazemitabar2009}. \cite{Simsek2004} qualifies such states as \textit{access states}, allowing difficult regions of the state space to be reached. The canonical example for the bottleneck concept often explains it with the \textit{doorways} of some navigation problem in a grid-world domain.
+Naturally, automatic systems have 
+all along exploited position cues in news 
+as key indicators of important content \parencite{schiffman,hong2014improving,ext_bert}. 
+The `lead' baseline is rather strong in single-document news summarization \parencite{brandow1995automatic,nenkova2005automatic}, 
+with automatic systems only modestly improving the results. 
+Nevertheless, more than 20-30\% of 
+summary-worthy sentences come from the second half of news documents \parencite{data2_nallapati2016abstractive,kedzie2018content}, 
+and the lead baseline, as shown in Table \ref{tab:lead_ex},
+does not always produce convincing summaries.
+So, systems must balance the position bias with representations of the semantic content 
+throughout the document. Alas, preliminary studies
+\parencite{kedzie2018content} suggest that even the most recent neural 
+methods predominantly pick sentences from the lead, and 
+that their content selection performance drops greatly
+when the position cues are withheld.
 
-The ideas presented in this thesis found their roots early in the history of HRL. It seems that two lines of approach have since been studied by a number of authors and could be recognized as either belonging to some \textit{graph clustering}, or  \textit{classification} perspective. While aiming towards the same goal, the classification perspective might have been more influenced by the \textit{online} and \textit{model-free} requirements  traditionally sought for in RL. It will be argued in chapter \ref{chap:dynamics}  that bottlenecks are intrinsically related to graph clustering and can be tackled more easily under this angle. 
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{|p{0.94\linewidth}|}
+        \hline
+        \textbf{Lead-3:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs in the first one-day international in Dhaka. Tamim Iqbal and Mushfiqur Rahim scored centuries as Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday when the second odi takes place in Mirpur. \\ \hline
+        \textbf{Reference:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs. Tamim Iqbal and Mushfiqur Rahim scored centuries for Bangladesh. Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday. \\ \hline \hline
+        \textbf{Lead-3}: Standing up for what you believe. What does it cost you? What do you gain? \\ \hline
+        \textbf{Reference:} Indiana town's Memories Pizza is shut down after online threat. Its owners say they'd refuse to cater a same-sex couple's wedding. \\
+        \hline
+    \end{tabular}
+    \caption{`Lead' (first 3 sentences of source) can produce extremely faithful (top) to disastrously inaccurate (bottom) summaries. Gold standard summaries are also shown.}
+    \label{tab:lead_ex}
+\end{table}
 
-\section{Graph Clustering Perspective}
-\cite{Hauskrecht1998} described a state space partitioning
-approach leading to an abstract MDP being overlaid to the periphery of the partitions.
-Macro-actions would then be learnt as transitions between such peripheral
-states. While a decomposition is assumed to be available \textit{a priori}, a contribution of this paper was to prove that such a model can lead to a reduction in the size of the state or action spaces. A similar state space partitioning intuition had been previously explored by a collaborator in \cite{Dean1995}. Even though the method of \cite{Dean1995} was not cast yet under the framework of
-reinforcement learning, it showed how a global planning problem could be decomposed into
-smaller locally-solvable problems which could be then be recombined into an optimal policy.
-The machinery or HRL being in its infancy, the Dantzig-Wolfe method of decomposition \parencite{Dantzig1960} -- a linear programming algorithm -- was used to solve the abstract MDP. The problem of obtaining a proper partitioning was also sidestepped in this work.
+In this paper, we verify that 
+sentence position and lead bias dominate the 
+learning signal for  state-of-the-art neural 
+extractive summarizers in the news domain. 
+We then present techniques to improve content selection in 
+the face of this bias. 
+The first technique makes use of `unbiased data' 
+created by permuting the order of sentences in the training
+articles. We use this shuffled dataset for pre-training, followed by 
+training on the original (unshuffled) articles. 
+The second method introduces an auxiliary loss 
+which encourages the model's scores for sentences 
+to mimic an estimated score distribution over the
+sentences, the latter computed using ROUGE overlap 
+with the gold standard. We implement these techniques 
+for two recent reinforcement learning based systems, 
+RNES \parencite{DBLP:conf/aaai/WuH18} and 
+BanditSum \parencite{dong2018banditsum}, and evaluate 
+them on the CNN/Daily Mail dataset \parencite{hermann2015teaching}.
 
-Along the same line of work, \cite{Menache2002} also proposed a decomposition algorithm called \textsc{Q-Cut} based on graph partitioning view of the state-transition graph. The Max-Flow/Min-Cut algorithm was used for finding the bottleneck states for which flat policies were constructed to reach them. The problem of representation and learning for temporal abstraction was cast under the options framework \parencite{Sutton1999} in which the \textsc{SMDP Q-Learning} algorithm could be applied. The approach was revisited in \cite{Mannor2004} where an agglomerative graph clustering algorithm was applied. Under this other perspective, options where defined between pairs of clusters rather than from arbitrary states to bottleneck states. Two types of graph clusterings were also defined: \textit{topological} and \textit{value-based}. The former attempted to group states into clusters based on structural regularities of the environment while the latter considered the reward information collected during learning.
-This agglomerative approach has recently been reformulated under an online setting in the \textit{Online Graph-based Agglomerative Hiearchical Clustering} algorithm (\textsc{OGAHC}) of \cite{Metzen2012}.
-
-The \textsc{L-Cut} algorithm of \cite{Simsek2005} can be seen as an extension of \textsc{Q-Cut} under a local knowledge of the environment only. Rather than setting up the graph bisection problem under the Max-Flow/Min-Cut formulation, the \textsc{NCut} criterion of \cite{ShiMalik2000} was used to measure the quality of the partitioning and solved as as generalized eigenvalue problem. A local graph representation was obtained by collecting samples of experience through a random walk process. After a certain number of iterations, the spectral bipartionning algorithm was applied and a policy, encoded as an \textit{option}, was learnt to reach the identified subgoals. A statistical test was applied on the set of boundary states of each partition to discriminate \textit{useful} subgoals from noise.
-
-The spectral clustering approach was revisited more recently in \cite{Mathew2012} under the Robust Perron Cluster Analysis of \cite{Weber2004} and their  \textsc{PCCA+} algorithm. While \textsc{NCut} and \textsc{PCCA+} are both spectral techniques sharing much in common,  Perron Cluster Analysis lends itself more easily to an interpretation in terms of metastability and invariant subsets of Markov chains. Intuitively, metastable regions correspond to subsets of states in which the stochastic process spends more time, switching to other such subsets on rare occasions. The \textit{cascade decomposition} technique of \cite{Chiu2010} is another recent attempt to find bottlenecks by computing the second eigenvector of the normalized graph Laplacian. It is in essence very similar to \textsc{L-Cut} which uses \textsc{NCut} \cite{ShiMalik2000}, also derived from the normalized graph Laplacian. 
-
-Trying to address both the discovery problem and the related one of transfer learning, \cite{Bouvrie2012} builds upon the diffusion maps framework of \cite{Coifman2006} and sharing ideas from \cite{Mahadevan2007}. A spectral partitioning approach is also adopted to identify \textit{geometric bottlenecks} of the environment, avoiding to take the reward structure into consideration. Policies and reward functions associated with these partitions are obtained by an intricate \textit{blending} procedure across scales. The diffusion framework can be explained in terms of the random walk process on a graph and the spectrum of the corresponding normalized graph Laplacian. To that account, the algorithm presented in this thesis shares much in common. 
-
-Instead of the general graph partitioning paradigm considered so far, \cite{Kazemitabar2009} attempts to find strongly connected components (SCC). While similar in spirit, this approach raises some questions regarding ergodicity. It seems that this scheme could be highly sensible to the sampling strategy, resulting in many cases with only a single component being found. The author's viewpoint is that the SCC constraint might be too strong. Surprisingly, the \textsc{HEXQ} framework of \cite{Hengst2002} is not mentioned by \cite{Kazemitabar2009}. \textsc{HEXQ} was an early attempt to automatically discover hierarchical structure based on a SCC decomposition of individual state variable. The author gave an interpretation of the resulting decomposition in terms of maximum \textit{predictability} within those regions. Such a viewpoint could also admit an information theoretic interpretation which is hinted to the reader later in this thesis.
-
-\section{States Classification Approaches}
-Rather than explicitly partitioning the state space using graph theoretic tools, another body of work focused on directly classifying out bottleneck states based on a visitation frequency principle. This view of bottleneck detection is in a sense closer to the philosophical principles of reinforcement learning. The proposed solutions tended to be cheaply computable \textit{online} and without a complete model of the environment. It seems however that they rely abundantly on heuristics, making it even hard to compare them . On the other hand, the graph partitioning approach appears to be justifiable more easily in theory as argued in chapter \ref{chap:dynamics}.
-
-The bottleneck discovery problem was formulated in \cite{Mcgovern2001} as a multiple-instance learning problem over bags of feature vectors collected by interacting with the environment. Two sets of bags were obtained from observations collected along successful and unsuccessful trajectories. The notion of diverse density then served  during either exhaustive search or gradient descent to find regions of the feature space with the most positive instances and the least negative ones. The authors acknowledged  that this method can be particularly sensitive to noise. The classification constraint imposed  by \cite{Mcgovern2001} between \textit{good} and \textit{bad} trajectories was lifted in \cite{Stolle2002}. It rather tried to directly extract those states which have been visited frequently and define them as subgoals. The initiation sets of the options was found by interpolation over the states which appear frequently enough (above average) on the paths to the subgoals.
-
-\cite{Simsek2004} identified subgoals by looking for \textit{access states}, leading to the regions of the state space that have not been visited recently: a notion which they called \textit{relative novelty}. The time frame within which novel events can happen is parameter of the algorithm and has a direct influence on which subgoals are detected.
-
-The use of a standard network centrality measure called \textit{betweenness} is investigated in \cite{Simsek2008}. Betweenness centrality measures the fraction of shortest paths passing through a given vertex of the graph. Nodes with high betweenness are deemed more important as they would appear more frequently on short, therefore more likely to be optimal, trajectories to the goal. The reward function is somehow taken into account into this measure by weighting the paths depending on weather they successfully reached the goal or not. A new graph centrality measure is proposed in \cite{Rad2010} called \textit{connection graph stability} and is argued to be a better fit than betweenness centrality for discovering bottlenecks. Some of the contributors then exploited slight variations of this definitions under different names such as \textit{connection bridge centrality} or \textit{co-betweenness centrality} \parencite{Moradi2010}.  
+We find that our auxiliary loss achieves 
+significantly better ROUGE scores
+compared to the base systems, and that the 
+improvement is even more pronounced when the true 
+best sentences appear later in the article. 
+On the other hand, the pretraining approach produces mixed results.
+We also confirm that when summary-worthy sentences 
+appear late, there is a large performance discrepancy 
+between the oracle summary and state-of-the-art summarizers,
+indicating that learning to balance lead bias with 
+other features of news text is a noteworthy issue to tackle.
 
 \subsection{Outline}
 

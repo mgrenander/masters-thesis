@@ -19,10 +19,10 @@
 \usepackage[colorlinks,bookmarksnumbered,bookmarksdepth=subsubsection,unicode=true]{hyperref}
 \newsubfloat{figure}  % must follow hyperref
 \hypersetup{
-pdfauthor = {Pierre-Luc Bacon},
-pdftitle = {On the Bottleneck Concept for Options Discovery: Theoretical Underpinnings and Extension in Continuous State Spaces},
+pdfauthor = {Matt Grenander},
+pdftitle = {Learning to Balance Lead Bias in News Summarization},
 pdfsubject = {Subject},
-pdfkeywords = {reinforcement learning, markov chains, hierarchical reinforcement learning},
+pdfkeywords = {natural language processing, automatic summarization, deep learning, machine learning},
 pdfcreator = {LaTeX with the hyperref package},
 pdfproducer = {},
 linkcolor = [HTML]{000000},
@@ -92,8 +92,8 @@ citecolor = [HTML]{0000FF},
 \predate{\begin{center}\large}
 \postdate{\end{center}}
 
-\title{On the Bottleneck Concept for Options Discovery: \\ \large{Theoretical Underpinnings and Extension in Continuous State Spaces} }
-\author{Pierre-Luc Bacon}
+\title{Learning to Balance Lead Bias in News Summarization} }
+\author{Matt Grenander}
 \date{\today}
 \renewcommand\maketitlehookb{
 \vfill
@@ -113,7 +113,7 @@ McGill University, Montreal
 \vspace{10mm}
 A thesis submitted to McGill University in partial fulfilment of the requirements of
 the degree of Master of Science.
-\copyright Pierre-Luc Bacon; \today.
+\copyright Matt Grenander; \today.
 }
 % Title (end)
 
@@ -135,11 +135,7 @@ the degree of Master of Science.
 \pagenumbering{roman}
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
-I would like to thank everyone with whom I had the chance to share my 
-enthusiasm upon exploring new ideas; those who gave me the freedom to fail, thinker,
-and be slightly obsessed on certain days.
-
-I am deeply grateful to my supervisor Doina Precup, Amir-massoud Farahmand, and Gheorghe Comanici for their precious insights and encouragement. Special thanks to lab members Clement Gehring and Neil Girdhar for their persistence in constructively challenging my ideas.
+blah blah acknowledgements
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,16 +144,7 @@ I am deeply grateful to my supervisor Doina Precup, Amir-massoud Farahmand, and 
 \clearpage
 \renewcommand{\abstractname}{Abstract}
 \begin{abstract}
-The bottleneck concept in reinforcement learning has played a prominent role in automatically finding temporal abstractions from experience. Lacking significant theory, it  has however been regarded by some as being merely a \textit{trick}. This thesis attempts to gain better intuition about this approach using spectral graph theory. A connection to the theory of Nearly Decomposable Markov Chains is also drawn and shows great promise. An options discovery algorithm is proposed and is the first of its kind to be applicable in continuous state spaces. As opposed to other similar approaches, this one has running time $\mathcal{O}(mn^2)$ rather than $\mathcal{O}(n^3)$ making it suitable to much larger domains than the typical \textit{grid worlds}.
-\end{abstract}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Abrégé
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\clearpage
-\renewcommand{\abstractname}{Résumé}
-\begin{abstract}
-L'identification automatique de goulots d'étranglement dans la structure de solution a joué un rôle important en apprentissage par renforcement hiérarchique au cours des dernières années. Bien que populaire, cette approche manque toujours de fondements théoriques adaptés. Ce mémoire tente de pallier ces lacunes en établissant des liens en théorie spectrale des graphes, espérant ainsi obtenir une meilleure compréhension des conditions garantissant son applicabilité. Une revue des efforts réalisés concernant les chaines de Markov presque complètement décomposable (NCD) permet de croire qu'elles pourraient être utiles au problème ici considéré. Un algorithme de découverte d'options motivé par la théorie spectrale des graphes est proposé et semble être le premier du genre à pouvoir être aussi appliqué dans un espace d'états continu. Contrairement à d'autres approches similaires, la complexité algorithmique en temps est de l'ordre de $\mathcal{O}(mn^2)$ plutôt que $\mathcal{O}(n^3)$, rendant possible la résolution de problèmes de plus grande envergure.
+blah blah abstract
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,40 +166,11 @@ L'identification automatique de goulots d'étranglement dans la structure de sol
 \input{chapters/introduction}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Background
+% Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Sequential Decision Making under Uncertainty}
 \label{chap:decisionmaking}
 \input{chapters/decisionmaking}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Temporal Abstraction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Temporal Abstraction}
-\label{chap:temporalabstraction}
-\input{chapters/temporalabstraction}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% From Structure to Dynamics
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{From Structure to Dynamics}
-\label{chap:dynamics}
-\input{chapters/dynamics}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Building Options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Building Options}
-\label{chap:buildingoptions}
-\input{chapters/building}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Experiments
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Empirical Evaluation}
-\label{chap:illustration}
-\input{chapters/experiments}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion
