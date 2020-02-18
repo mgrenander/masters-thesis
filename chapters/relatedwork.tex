@@ -1,0 +1,33 @@
+
+Modern summarization methods for news are typically
+based on neural network-based sequence-to-sequence learning
+\parencite{cnn1_kalchbrenner2014convolutional,cnn2_kim2014convolutional,rnn2_chung2014gru,ext2_2015Yin,ext3_cao2015learning,ext4_cheng2016neural,ext5_summarunner,narayan2018don,neusum}.
+In MLE-based training, extractive summarizers are 
+trained with gradient ascent to maximize the likelihood
+of heuristically-generated ground-truth binary
+labels \parencite{ext5_summarunner}. Many MLE-based models
+do not perform as well as their reinforcement 
+learning-based (RL) competitors that directly optimize ROUGE \parencite{abs5_paulus2017deep,DBLP:Narayan/2018,dong2018banditsum,DBLP:conf/aaai/WuH18}. 
+As RL-based models represent the state of the art for 
+extractive summarization, we analyze them in this paper.
+
+The closest work to ours is a recent study by 
+\cite{kedzie2018content} which showed that 
+MLE-based models learn a significant bias for 
+selecting early sentences when trained on news 
+articles as opposed to other domains. As much as 
+58\% of selected summary sentences come directly 
+from the lead. Moreover, when these models
+are trained on articles whose sentences
+are randomly shuffled, the performance drops 
+considerably for news domain only. While this drop 
+could be due to the destruction of position cues, 
+it may also arise because the article's coherence
+and context were lost. 
+
+In this paper, we employ finer control on the 
+distortion of sentence position, coherence, and 
+context, and confirm that performance drops are 
+mainly due to the lack of position cues. 
+We also propose the first techniques to 
+counter the effects of lead bias in neural extractive systems.

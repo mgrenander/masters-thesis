@@ -1,81 +1,40 @@
-Extractive summarization remains a simple 
-and fast approach to produce summaries which 
-are grammatical and accurately represent the source text.
-In the news domain, these systems are able to 
-use a dominant signal: the position of a sentence 
-in the source document. 
-Due to journalistic conventions which place important information
-early in the articles, the lead sentences often contain key information. In this paper, we explore how systems can look beyond this simple trend. 
+\textbf{Natural Language Processing} (NLP) is a growing subfield of artificial intelligence that aims to design systems able to understand and respond to human language. Many NLP tasks remain unsolved, reflecting the vast complexity of human language.
 
-Naturally, automatic systems have 
-all along exploited position cues in news 
-as key indicators of important content \parencite{schiffman,hong2014improving,ext_bert}. 
-The `lead' baseline is rather strong in single-document news summarization \parencite{brandow1995automatic,nenkova2005automatic}, 
-with automatic systems only modestly improving the results. 
-Nevertheless, more than 20-30\% of 
-summary-worthy sentences come from the second half of news documents \parencite{data2_nallapati2016abstractive,kedzie2018content}, 
-and the lead baseline, as shown in Table \ref{tab:lead_ex},
-does not always produce convincing summaries.
-So, systems must balance the position bias with representations of the semantic content 
-throughout the document. Alas, preliminary studies
-\parencite{kedzie2018content} suggest that even the most recent neural 
-methods predominantly pick sentences from the lead, and 
-that their content selection performance drops greatly
-when the position cues are withheld.
+Among the unsolved problems, \textbf{text summarization} is primarily concerned with creating systems able to create concise summaries of various text sources. Summarization systems typically follow one of two approaches. \textbf{Abstractive} summarizers generate summaries token-by-token, requiring the system to both understand the text in depth and produce a grammatical summary. 
+On the other hand, \textbf{extractive} summarizers create summaries by selecting relevant text spans -- usually sentences -- from the source document.
+This thesis will focus on analyzing and improving the extractive approach, particularly in the news domain.
+
+% 
+
+Many text domains 
+In news summarization, 
+
 
 \begin{table}[t]
     \centering
     \small
     \begin{tabular}{|p{0.94\linewidth}|}
         \hline
-        \textbf{Lead-3:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs in the first one-day international in Dhaka. Tamim Iqbal and Mushfiqur Rahim scored centuries as Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday when the second odi takes place in Mirpur. \\ \hline
-        \textbf{Reference:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs. Tamim Iqbal and Mushfiqur Rahim scored centuries for Bangladesh. Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday. \\ \hline \hline
-        \textbf{Lead-3}: Standing up for what you believe. What does it cost you? What do you gain? \\ \hline
-        \textbf{Reference:} Indiana town's Memories Pizza is shut down after online threat. Its owners say they'd refuse to cater a same-sex couple's wedding. \\
+        \textbf{Article:} \hl{Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs in the first one-day international in Dhaka. Tamim Iqbal and Mushfiqur Rahim scored centuries as Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday when the second ODI takes place in Mirpur.} Bangladesh elected to bat after winning the toss but struggled to 67 for two in the 20th over after Soumya Sarkar was run out by Wahab Riaz for 20 and Mahmudullah was bowled by Rahat Ali. Tamim and Mushfiqur set about repairing Bangladesh's stuttering innings and did just that by putting on 178 runs in 21.4 overs for the third wicket, during which time Tamim notched his fifth ODI century. He continued to plunder runs with ease but went for one big shot too many against Wahab and was caught at mid-off to leave Bangladesh on 245 for three with nine overs left. His 135-ball knock of 132 included 15 fours and three sixes. Two sixes in the 43rd over took Mushfiqur into the nineties and he joined Iqbal in passing three figures by hitting Saeed Ajmal for successive fours in the 45th. Mushfiqur perished in the 48th over when he edged Wahab behind to depart for a 77-ball innings of 106 which included 13 fours and two sixes. Shakib al Hasan and Sabbir Rahman scored 30 runs in 2.2 overs before falling to Wahab (four for 59) in the final over as the hosts set pakistan 330 for victory. Azhar Ali and Sarfraz Ahmed put on 53 runs for the first wicket before the latter slog-swept Arafat Sunny to deep backward square leg to leave Pakistan one down in the 11th over. Mohammad Hafeez was then run out to leave Pakistan stuttering on 59 for two but there was some respite when Azhar notched his fifth ODI half-century in the 20th over to celebrate his first match as captain in fine style.\\ \hline
+        \textbf{Reference:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs. Tamim Iqbal and Mushfiqur Rahim scored centuries for Bangladesh. Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday. \\
         \hline
     \end{tabular}
-    \caption{`Lead' (first 3 sentences of source) can produce extremely faithful (top) to disastrously inaccurate (bottom) summaries. Gold standard summaries are also shown.}
+    \caption{Note that the article has been truncated for conciseness.}
     \label{tab:lead_ex}
 \end{table}
 
-In this paper, we verify that 
-sentence position and lead bias dominate the 
-learning signal for  state-of-the-art neural 
-extractive summarizers in the news domain. 
-We then present techniques to improve content selection in 
-the face of this bias. 
-The first technique makes use of `unbiased data' 
-created by permuting the order of sentences in the training
-articles. We use this shuffled dataset for pre-training, followed by 
-training on the original (unshuffled) articles. 
-The second method introduces an auxiliary loss 
-which encourages the model's scores for sentences 
-to mimic an estimated score distribution over the
-sentences, the latter computed using ROUGE overlap 
-with the gold standard. We implement these techniques 
-for two recent reinforcement learning based systems, 
-RNES \parencite{DBLP:conf/aaai/WuH18} and 
-BanditSum \parencite{dong2018banditsum}, and evaluate 
-them on the CNN/Daily Mail dataset \parencite{hermann2015teaching}.
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{|p{0.94\linewidth}|}
+        \hline
+        \textbf{Article}: Standing up for what you believe. What does it cost you? What do you gain? Memories Pizza in the Indiana town of Walkerton is finding out. \hl{The family-run restaurant finds itself at the center of the debate over the state's religious freedom restoration act after its owners said they'd refuse to cater a same-sex couple's wedding.} ``If a gay couple was to come and they wanted us to bring pizzas to their wedding, we'd have to say no'', Crystal O'Connor told CNN affiliate WBND-TV in South Bend. The statement struck at the heart of fears by critics, who said the new law would allow businesses to discriminate against gays and lesbians. They called for boycotts. But supporters also rallied. And by the end of the week, they had donated more than \$842,000 for the business. Social media unloaded on the pizzeria in the community of 2,100 people that few folks outside northern Indiana knew existed before this week. riskyliberal tweeted : ``Dear \#memoriespizza. no. My boycotting your business because I don't like your religious bigotry is not a violation of your freedom to practice your religion.'' ``Don't threaten \#memoriespizza'' tweeted aღanda. ``Just mock them for their ignorance.'' Bad reviews flooded the restaurant's Facebook page, most having little to do with the quality of the food. Many too vulgar to share. ``Do you really want to financially support a company that treats some of your fellow citizens like second class citizens? Boycott memories pizza!!'' said Rob Katz of Indianapolis. ``Let's hope they either rethink their policy or the free market puts them out of business.'' But \hl{one outburst in particular shut down the restaurant Wednesday and was expected to do the same Thursday.} ``Who's going to Walkerton with me to burn down Memories Pizza?'' Jessica Dooley of Goshen tweeted, according to the Walkerton police department. The account has been deleted since the tweet was posted. Detectives who investigated have recommended charges of harassment, intimidation and threats, according to Charles Kulp, assistant police chief. \\ \hline
+        \textbf{Reference:} Indiana town's Memories Pizza is shut down after online threat. Its owners say they'd refuse to cater a same-sex couple's wedding. \\ \hline
+    \end{tabular}
+    \caption{Note that the article has been truncated for conciseness.}
+    \label{tab:my_label}
+\end{table}
 
-We find that our auxiliary loss achieves 
-significantly better ROUGE scores
-compared to the base systems, and that the 
-improvement is even more pronounced when the true 
-best sentences appear later in the article. 
-On the other hand, the pretraining approach produces mixed results.
-We also confirm that when summary-worthy sentences 
-appear late, there is a large performance discrepancy 
-between the oracle summary and state-of-the-art summarizers,
-indicating that learning to balance lead bias with 
-other features of news text is a noteworthy issue to tackle.
 
+\clearpage
 \subsection{Outline}
-
-Basic theory of stochastic processes and Markov chains is first presented in chapter \ref{chap:decisionmaking}. The inclusion of this material is motivated by the probabilistic interpretation of spectral graph theory studied in chapter \ref{chap:dynamics}. The theory of Markov Decision Processes is presented in section \ref{sec:mdp} as a necessary prerequisite for the appreciation of the techniques developed in reinforcement learning. Chapter \ref{chap:temporalabstraction} focuses on the presentation of the options framework \parencite{Sutton1999} in reinforcement learning as a way to represent temporal abstraction and learn optimal control over it.
-
-The connection from graph \textit{structure} to system \textit{dynamics} is developed throughout chapter \ref{chap:dynamics} and is instrumental is understanding the strengths and pitfalls of the graph partitioning approach for options discovery. It also allows a better understanding of the relevant work on Nearly-Completely Decomposable Markov Chains (NCD) for future theoretical research on the bottleneck concept. The NCD theory seems to call for an information theoretic comprehension of temporal abstraction which is briefly developed at the end of this section.
-
-A new algorithm for options discovery is proposed in chapter \ref{chap:buildingoptions} based on the  \textsc{Walktrap} community detection algorithm of \cite{Pons2005}. Although \textsc{Walktrap} finds its roots into spectral graph theory, its running time is only order $\mathcal{O}(mn^2)$ rather than $\mathcal{O}(n^3)$ by avoiding to compute the eigenvectors explicitly. The problem of options discovery and construction is also set under the assumption of a continuous state space. Techniques for constructing proximity graphs in Euclidean space are developed in section \ref{sec:proximitygraphs}. Section \ref{sec:knnoptions} shows how approximate nearest neighbors algorithms can be used to properly define the initiation and termination components of options under continuous observations.
-
-An illustration of the proposed algorithm is provided in chapter \ref{chap:illustration} with the Pinball domain of \cite{Konidaris2009}. Practical difficulties having to do oscillations and off-policy learning are analysed. The proper empirical choices for the number of nearest neighbors, type of proximity graph and time scale for the \textsc{Walktrap} algorithm are discussed.

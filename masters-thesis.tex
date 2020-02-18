@@ -5,7 +5,7 @@
 \setstocksize{11in}{8.5in}
 \settrimmedsize{11in}{8.5in}{*}
 \settrims{0in}{0in}
-\setlrmarginsandblock{38mm}{25mm}{*}
+\setlrmarginsandblock{25mm}{25mm}{*}
 \setulmarginsandblock{25mm}{25mm}{*}
 \setheadfoot{13pt}{26pt}
 \setheaderspaces{*}{13pt}{*}
@@ -38,6 +38,7 @@ citecolor = [HTML]{0000FF},
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
 \usepackage{standalone}
+\usepackage{color,soul}
 \usepackage[boxed]{algorithm2e}
 
 % Custom commands
@@ -55,6 +56,12 @@ citecolor = [HTML]{0000FF},
 \def\indicator{\mathds{1}}
 \DeclareMathOperator{\expectation}{\mathbb{E}}
 \DeclareMathOperator{\vol}{\text{vol}}
+
+\newcommand{\Drandom}{$D_{\mathrm{random}}$}
+\newcommand{\Dinorder}{$D_{\mathrm{inorder}}$}
+\newcommand{\Dearly}{$D_{\mathrm{early}}$}
+\newcommand{\Dlate}{$D_{\mathrm{late}}$}
+\newcommand{\Dmedian}{$D_{\mathrm{med}}$}
 
 \newcommand{\todo}[1]{[TODO: #1]}
 \newcommand{\termidx}[1]{\index{#1}{\textbf{#1}}}
@@ -92,7 +99,7 @@ citecolor = [HTML]{0000FF},
 \predate{\begin{center}\large}
 \postdate{\end{center}}
 
-\title{Learning to Balance Lead Bias in News Summarization} }
+\title{Learning to Balance Lead Bias in News Summarization}
 \author{Matt Grenander}
 \date{\today}
 \renewcommand\maketitlehookb{
@@ -103,7 +110,7 @@ citecolor = [HTML]{0000FF},
 \begin{center}
 {
 \large
-Computer Science\\
+Department of Computer Science\\
 McGill University, Montreal
 }
 \end{center}
@@ -111,9 +118,11 @@ McGill University, Montreal
 }
 \renewcommand\maketitlehookd{
 \vspace{10mm}
+\begin{center}
 A thesis submitted to McGill University in partial fulfilment of the requirements of
-the degree of Master of Science.
-\copyright Matt Grenander; \today.
+the degree of Master of Science. \\
+\copyright 2020 Matt Grenander
+\end{center}
 }
 % Title (end)
 
@@ -135,7 +144,7 @@ the degree of Master of Science.
 \pagenumbering{roman}
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
-blah blah acknowledgements
+Acknowledgements go here.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,7 +153,22 @@ blah blah acknowledgements
 \clearpage
 \renewcommand{\abstractname}{Abstract}
 \begin{abstract}
-blah blah abstract
+The progression of technology and the Internet has allowed us to create and share information at an unprecedented rate.
+The usefulness of summarization systems to intelligently condense text has become apparent as a method to sift through the vast amount of text we encounter each day.
+Summarization systems typically follow one of two approaches.
+In abstractive summarization, the system generates a summary token-by-token, whereas in the extractive approach, the system is tasked with selecting snippets of text from the source document -- typically sentences -- that best represent the text.
+Extractive summarization systems have recently been shown to exhibit a bias towards selecting content from an article's lead sentences, even when these sentences are completely irrelevant to the overall text. \parencite{kedzie2018content}.
+We investigate this phenomenon in detail, showing that when articles' sentence order is permuted, state-of-the-art systems cannot recover the same performance.
+We then propose a solution to this problem, an auxiliary objective function which encourages the model to look beyond a document's leading sentences and properly value each sentence.
+We show that adding this auxiliary objective results in significant improvements in performance, particularly in cases where the article's leading sentences constitute a poor summary.
+We extend this approach to a novel summarization method that classifies documents with a strong lead vs. a weak lead, and having separate systems summarize the two cases.
+We show that this approach is promising, though more work is needed in classifying articles in this way accurately.
+\end{abstract}
+
+\clearpage
+\renewcommand{\abstractname}{Abrégé}
+\begin{abstract}
+French translation goes here.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -153,8 +177,8 @@ blah blah abstract
 \clearpage
 \setcounter{tocdepth}{2}
 \tableofcontents
-%\newpage
-%\listoffigures
+\newpage
+\listoffigures
 %\listofalgorithms
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -168,9 +192,9 @@ blah blah abstract
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Sequential Decision Making under Uncertainty}
-\label{chap:decisionmaking}
-\input{chapters/decisionmaking}
+\chapter{Related Work}
+\label{chap:relatedwork}
+\input{chapters/relatedwork}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion
