@@ -1,14 +1,14 @@
-\textbf{Natural Language Processing} (NLP) is a growing subfield of artificial intelligence that aims to design systems able to understand and respond to human language. Many NLP tasks remain unsolved, reflecting the vast complexity of human language.
+\textbf{Natural Language Processing} (NLP) is an important subfield of artificial intelligence concerned with designing systems that understand and respond to human language. Complex natural language tasks often require intricate solutions, and many NLP problems remain open research areas.
+Among these topics, \textbf{automatic summarization} aims to create systems able to write concise summaries of various text sources.
+Automatic summarization's use cases are diverse: these systems could be used to summarize informal text such as emails or extract key points from formal literature such as medical reports or legal documents \parencite{zhang2018radsum, billsum}.
+The usefulness of this task attracts substantial research interest, and forms the topic of this thesis.
 
-Among the unsolved problems, \textbf{text summarization} is primarily concerned with creating systems able to create concise summaries of various text sources. Summarization systems typically follow one of two approaches. \textbf{Abstractive} summarizers generate summaries token-by-token, requiring the system to both understand the text in depth and produce a grammatical summary. 
+Summarization systems typically follow one of two approaches. \textbf{Abstractive} summarizers generate summaries token-by-token, requiring the system to both understand the text in-depth and produce a grammatical summary. 
 On the other hand, \textbf{extractive} summarizers create summaries by selecting relevant text spans -- usually sentences -- from the source document.
 This thesis will focus on analyzing and improving the extractive approach, particularly in the news domain.
 
-% 
-
-Many text domains 
-In news summarization, 
-
+Extractive summarizers have historically focused on selecting the most \textit{relevant} text snippets while reducing \textit{redundancy} between selected segments. This can be accomplished in numerous ways, such as a linear combination of these two features \parencite{mmr}, or more sophisticated formulations using integer linear programming or graphical methods \parencite{mcdonald2007study, textrank}.
+More recently, state-of-the-art summarizers have overwhelmingly been developed using deep learning approaches, and this thesis focuses on deficiencies within these methods.
 
 \begin{table}[t]
     \centering
@@ -19,9 +19,15 @@ In news summarization,
         \textbf{Reference:} Bangladesh beat fellow World Cup quarter-finalists Pakistan by 79 runs. Tamim Iqbal and Mushfiqur Rahim scored centuries for Bangladesh. Bangladesh made 329 for six and Pakistan could only muster 250 in reply. Pakistan will have the chance to level the three-match series on Sunday. \\
         \hline
     \end{tabular}
-    \caption{Note that the article has been truncated for conciseness.}
+    \caption[An example in which leading sentences form a good summary.]{Leading sentences often form a strong baseline for news summarization, such as in this example. Here, the highlighted passage indicates the most closely related sentences to the reference summary. Note that the article has been truncated for conciseness.}
     \label{tab:lead_ex}
 \end{table}
+
+% Different domains carry different idiosyncrasies
+Different text domains often carry idiosyncratic traits and require different summarization approaches. For example, a system summarizing emails may benefit from using an abstractive approach, since emails are typically comprised of a conversational nature and may not contain relevant summary-worthy text snippets.
+In the same way, news summarization also features unique characteristics that affect how we summarize these texts. News articles, especially event-based journalism, usually follow an inverted pyramid scheme, in which the main facts are placed near the article's starting point. Using the first three sentences of an article as a summary is often used as a strong baseline \parencite{nenkova2005automatic}, and many systems naturally exploit position cues when extracting a summary \parencite{hong2014improving, schiffman}. For example, consider the article in Table \ref{tab:lead_ex}. While the article's first three sentences include slightly extraneous information, overall it closely mimics the reference summary and undoubtedly represents a strong extractive summary.
+
+However, in many situations the leading sentences may not convey the most meaningful summary content. For example, consider the article in Table \ref{tab:bad_lead}. In this case, summarization models should recognize that the preamble does not contribute relevant information and exclude these sections from the output summary. Likewise, another challenge models face is recognizing that important content may occur near the end of the article, as in this example.
 
 \begin{table}[t]
     \centering
@@ -31,10 +37,38 @@ In news summarization,
         \textbf{Article}: Standing up for what you believe. What does it cost you? What do you gain? Memories Pizza in the Indiana town of Walkerton is finding out. \hl{The family-run restaurant finds itself at the center of the debate over the state's religious freedom restoration act after its owners said they'd refuse to cater a same-sex couple's wedding.} ``If a gay couple was to come and they wanted us to bring pizzas to their wedding, we'd have to say no'', Crystal O'Connor told CNN affiliate WBND-TV in South Bend. The statement struck at the heart of fears by critics, who said the new law would allow businesses to discriminate against gays and lesbians. They called for boycotts. But supporters also rallied. And by the end of the week, they had donated more than \$842,000 for the business. Social media unloaded on the pizzeria in the community of 2,100 people that few folks outside northern Indiana knew existed before this week. riskyliberal tweeted : ``Dear \#memoriespizza. no. My boycotting your business because I don't like your religious bigotry is not a violation of your freedom to practice your religion.'' ``Don't threaten \#memoriespizza'' tweeted aღanda. ``Just mock them for their ignorance.'' Bad reviews flooded the restaurant's Facebook page, most having little to do with the quality of the food. Many too vulgar to share. ``Do you really want to financially support a company that treats some of your fellow citizens like second class citizens? Boycott memories pizza!!'' said Rob Katz of Indianapolis. ``Let's hope they either rethink their policy or the free market puts them out of business.'' But \hl{one outburst in particular shut down the restaurant Wednesday and was expected to do the same Thursday.} ``Who's going to Walkerton with me to burn down Memories Pizza?'' Jessica Dooley of Goshen tweeted, according to the Walkerton police department. The account has been deleted since the tweet was posted. Detectives who investigated have recommended charges of harassment, intimidation and threats, according to Charles Kulp, assistant police chief. \\ \hline
         \textbf{Reference:} Indiana town's Memories Pizza is shut down after online threat. Its owners say they'd refuse to cater a same-sex couple's wedding. \\ \hline
     \end{tabular}
-    \caption{Note that the article has been truncated for conciseness.}
-    \label{tab:my_label}
+    \caption[An example in which leading sentences form a poor summary.]{In some cases, such as this one, models must learn that leading sentences do not always constitute meaningful content. As in Table \ref{tab:lead_ex}, the highlighted passages indicate sentences that reflect the content from the reference summary. The article has been truncated for conciseness.}
+    \label{tab:bad_lead}
 \end{table}
 
+Previous work has shown that more than 20-30\% summary-worthy sentences come from the second half of news documents \parencite{abs3_NallapatiZSGX16, kedzie2018content}. It is therefore crucial that systems properly balance position cues with semantic representations of the text. Alas, previous studies suggest that most recent neural methods predominantly pick sentences from the lead, and that their content selection performance drops greatly when the position cues are withheld \parencite{kedzie2018content}. Table \ref{tab:lead_overlap} provides a sample of how often recent systems select sentences from the lead. We include an ``oracle'' extractive summarizer in which we compute the 3 highest-scoring sentences with respect to ROUGE, a measure of lexical overlap between the system and reference summary\footnote{See Section \ref{sec:rouge} for an overview of ROUGE.}. The striking difference between the oracle extractive summarizer and other recent systems indicates that these models' reliance on positional cues is a serious deficiency.
 
-\clearpage
-\subsection{Outline}
+\begin{table}[t]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        \textbf{Model} &  \textbf{Lead Overlap (\%)} \\ \hline
+        Oracle & 27.24 \\ \hline
+        NeuSum \parencite{neusum} & 58.24 \\ \hline
+        RNES \parencite{DBLP:conf/aaai/WuH18} & 68.44 \\ \hline
+        BanditSum \parencite{dong2018banditsum} & 69.87 \\ \hline
+    \end{tabular}
+    \caption[Frequency the lead is chosen among recent summarization models.]{On the CNN / Dailymail dataset \parencite{hermann2015teaching}, recent models frequently select leading sentences far above the rate that an oracle summarizer does.} %The oracle here corresponds to the highest-scoring triplet of sentences, according to the ROUGE metric \parencite{eva1_lin:2004:ACLsummarization}.}
+    \label{tab:lead_overlap}
+\end{table}
+
+This trend is particularly worrying since it suggests that current systems ignore learning the document's details in favour of exploiting simple positional cues. This learning bottleneck has implications beyond news summarization: many other summarization domains may also hold similar idiosyncrasies that models may be exploiting instead of learning suitable representations. For this reason, it is important to design methods that promote learning beyond simple cues, and encourage models to learn deeper semantic representations.
+
+\section{Thesis Outline}
+In this thesis, we explore to what degree models are affected by positional biases in news summarization, primarily using the recent BanditSum model \parencite{dong2018banditsum} to explore these issues. We then formulate a method to counter these biases using an auxiliary target objective, showing that this technique leads to better summaries overall. We also propose a new summarization model based on classifying articles by the leading sentence's strength.
+\paragraph{Chapter 2} provides the background information necessary to understand summarization. We review prior work in designing summarization systems, explaining how their development lead to the current status of the field. Particular attention is given to more recent neural extractive models, as they serve as the basis for the following experiments.
+\paragraph{Chapter 3} We explore BanditSum's reliance on positional cues through a series of perturbation experiments. After showing that positional cues play a dominating role in content selection, we present a method for countering the detrimental effects of lead bias. The method estimates the value of each sentence in an article, and modifies an existing model by encouraging it to match the estimated values. We show that this technique leads to summaries that are significantly more similar to reference summaries.
+\paragraph{Chapter 4} We devise a new summarization model based on classifying articles by the strength of their leading sentences. We show that by training on a subset of articles with weak leading sentences, the resulting model outperforms a baseline trained on the full dataset on this subset.
+However, building models capable of performing the necessary classification remains a challenge for current methods.
+\paragraph{Chapter 5} summarizes this work's main findings, and provides some potential directions for future research.
+
+\section{Statement of Contributions}
+This work was heavily influenced by colleagues' experiments, and for completeness, we include these motivating experiments here. In particular, the perturbation experiments in Chapter 3 -- Section \ref{sec:perturb} -- were conceived and executed by Yue Dong.
+Original contributions from this thesis include all other experiments in Chapter 3 and all experiments in Chapter 4, i.e. the auxiliary loss and the lead classifier sections.
+
+Parts of this thesis also appear in a paper published in the \textit{2019 Conference on Empirical Methods in Natural Language Processing and 9th International Joint Conference on Natural Language Processing} (EMNLP-IJCNLP 2019). The paper, \textit{Countering the Effects of Lead Bias in News Summarization via Multi-Stage Training and Auxiliary Losses} \parencite{grenander-etal-2019-countering}, contains all experiments from Chapters 3.

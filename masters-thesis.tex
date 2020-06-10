@@ -19,7 +19,7 @@
 \usepackage[colorlinks,bookmarksnumbered,bookmarksdepth=subsubsection,unicode=true]{hyperref}
 \newsubfloat{figure}  % must follow hyperref
 \hypersetup{
-pdfauthor = {Matt Grenander},
+pdfauthor = {Matthew Grenander},
 pdftitle = {Learning to Balance Lead Bias in News Summarization},
 pdfsubject = {Subject},
 pdfkeywords = {natural language processing, automatic summarization, deep learning, machine learning},
@@ -33,7 +33,9 @@ citecolor = [HTML]{0000FF},
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{diagbox}
 \usepackage{dsfont}
+\usepackage{mathtools}
 \usepackage{xspace}
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows}
@@ -56,12 +58,29 @@ citecolor = [HTML]{0000FF},
 \def\indicator{\mathds{1}}
 \DeclareMathOperator{\expectation}{\mathbb{E}}
 \DeclareMathOperator{\vol}{\text{vol}}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\rougen}{ROUGE-N}
+\DeclareMathOperator{\rougeone}{ROUGE-1_{F1}}
+\DeclareMathOperator{\rougetwo}{ROUGE-2_{F1}}
+\DeclareMathOperator{\rougel}{ROUGE-L_{F1}}
+\DeclarePairedDelimiterX{\infdivx}[2]{(}{)}{%
+  #1\;\delimsize\|\;#2%
+}
+\newcommand{\infdiv}{D_{\KL} \infdivx}
 
 \newcommand{\Drandom}{$D_{\mathrm{random}}$}
 \newcommand{\Dinorder}{$D_{\mathrm{inorder}}$}
 \newcommand{\Dearly}{$D_{\mathrm{early}}$}
 \newcommand{\Dlate}{$D_{\mathrm{late}}$}
 \newcommand{\Dmedian}{$D_{\mathrm{med}}$}
+\newcommand{\Dall}{$D_{\mathrm{all}}$}
+\newcommand{\Dtwenty}{$D_{\mathrm{20}}$}
+\newcommand{\Dthirty}{$D_{\mathrm{30}}$}
+\newcommand{\Dfifty}{$D_{\mathrm{50}}$}
+\newcommand{\Dsixty}{$D_{\mathrm{60}}$}
+\newcommand{\BanSumEarly}{$\mathrm{BanditSum+BERT_{early}}$}
+\newcommand{\BanSumLate}{$\mathrm{BanditSum+BERT_{late}}$}
 
 \newcommand{\todo}[1]{[TODO: #1]}
 \newcommand{\termidx}[1]{\index{#1}{\textbf{#1}}}
@@ -144,7 +163,11 @@ the degree of Master of Science. \\
 \pagenumbering{roman}
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
-Acknowledgements go here.
+% Annie and Jackie
+First, I would like to thank my supervisors Jackie Chi Kit Cheung and Annie Louis. I am thankful for their guidance in exploring research topics, carrying out practical research and communicating these ideas effectively. They have helped me think critically and become a better researcher.
+
+% Friends and colleagues
+I also want to thank my colleagues and friends at MILA for their helpful discussions, patience and feedback. In particular, I am grateful to Yue Dong for our many conversations that led to new research directions and collaborations.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -153,22 +176,31 @@ Acknowledgements go here.
 \clearpage
 \renewcommand{\abstractname}{Abstract}
 \begin{abstract}
-The progression of technology and the Internet has allowed us to create and share information at an unprecedented rate.
-The usefulness of summarization systems to intelligently condense text has become apparent as a method to sift through the vast amount of text we encounter each day.
-Summarization systems typically follow one of two approaches.
-In abstractive summarization, the system generates a summary token-by-token, whereas in the extractive approach, the system is tasked with selecting snippets of text from the source document -- typically sentences -- that best represent the text.
-Extractive summarization systems have recently been shown to exhibit a bias towards selecting content from an article's lead sentences, even when these sentences are completely irrelevant to the overall text. \parencite{kedzie2018content}.
-We investigate this phenomenon in detail, showing that when articles' sentence order is permuted, state-of-the-art systems cannot recover the same performance.
-We then propose a solution to this problem, an auxiliary objective function which encourages the model to look beyond a document's leading sentences and properly value each sentence.
-We show that adding this auxiliary objective results in significant improvements in performance, particularly in cases where the article's leading sentences constitute a poor summary.
-We extend this approach to a novel summarization method that classifies documents with a strong lead vs. a weak lead, and having separate systems summarize the two cases.
-We show that this approach is promising, though more work is needed in classifying articles in this way accurately.
+As technology increases the tremendous amount of text we encounter each day, a clear need has arisen for tools to filter out noise and highlight key phrases.
+\textbf{Automatic summarization} systems have emerged as a viable solution to sort through and intelligently condense text.
+In this thesis, we focus on \textbf{extractive summarization}, in which the system selects text snippets from a source document that best represent the given text.
+Extractive summarization systems must learn complex lexical representations so that they are able to rank sentences in order of relevance, while minimizing redundancy in the output summary.
+For news articles, extractive summarization systems have been shown to exhibit a bias towards selecting content from an article's lead sentences, even when these sentences are irrelevant to the overall text \parencite{kedzie2018content}.
+We investigate this phenomenon in detail, showing that when an article's sentence order is permuted, state-of-the-art systems drastically underperform.
+To alleviate this problem, we propose an auxiliary objective function which encourages the model to look beyond a document's leading sentences and properly value each sentence.
+We show that this auxiliary objective significantly improves summarization performance, particularly in cases where the article's leading sentences constitute a poor summary.
+We extend this approach to a novel summarization method that classifies documents into two distinct groups: ones in which leading phrases constitute a strong summary, and ones in which they form a poor sumary. Two separate systems then summarize the two groups.
+We show that this approach is promising, though more work is needed towards accurately classifying articles.
 \end{abstract}
 
 \clearpage
 \renewcommand{\abstractname}{Abrégé}
 \begin{abstract}
-French translation goes here.
+L’usage de la technologie au quotidien nous confrontant à de plus en plus à d’éléments textuels, nous avons plus que jamais besoin d’outils pour filtrer et synthétiser les concepts clés dans un corps de texte.
+Les \textbf{systèmes de résumé automatiques} apparaissent comme des solutions viables pour organiser et condenser du texte intelligemment. 
+Dans cette thèse, nous nous concentrons sur \textbf{la synthèse extractive}, dans laquelle le système sélectionne les extraits du document source représentant au mieux l’idée générale du texte.
+Les systèmes extractifs doivent apprendre des représentations lexicales complexes afin de pouvoir classer les phrases par ordre de pertinence, tout en minimisant leur redondance dans le résumé final. 
+Pour les articles de presse, il a été démontré que les systèmes extractifs présentent un biais car ils sélectionnent d’emblée les premières phrases de l’article, même lorsque ces phrases ne sont pas pertinentes pour résumer le texte global \parencite{kedzie2018content}.
+Nous étudions ce phénomène en détail, en démontrant le déclin drastique des performances de technologies de pointe lorsque l’ordre des phrases au sein d’un article est perturbé.
+Pour atténuer ce problème, nous proposons un objectif auxiliaire qui encourage le modèle à poursuivre son analyse au-delà des premières phrases d'un document, et à évaluer correctement chaque phrase. 
+Nous montrons que cet objectif auxiliaire améliore considérablement la qualité de synthèse, en particulier dans les cas où les premières phrases de l'article constituent un mauvais résumé. 
+Nous étendons cette approche à une nouvelle méthode de synthèse, qui classe les documents en deux groupes distincts : ceux dont les premières phrases constituent un bon résumé, et ceux pour lesquelles elles sont insuffisantes. Des systèmes séparés résument les deux groupes.
+Nous montrons que cette approche est prometteuse, bien qu’il soit nécessaire d’optimiser davantage le système pour classer les articles avec plus de précision.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,7 +211,8 @@ French translation goes here.
 \tableofcontents
 \newpage
 \listoffigures
-%\listofalgorithms
+\newpage
+\listoftables
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Introduction
@@ -190,11 +223,31 @@ French translation goes here.
 \input{chapters/introduction}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Related Work
+% Background / Related Work
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Related Work}
+\chapter{Background}
 \label{chap:relatedwork}
 \input{chapters/relatedwork}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Perturbing Sentence Order
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \chapter{Perturbing Sentence Order}
+% \label{chap:perturb}
+% \input{chapters/perturb}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Countering Lead Bias via Auxiliary Loss
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Countering Lead Bias via Auxiliary Loss}
+\label{chap:aux_loss}
+\input{chapters/auxiliary}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lead Classification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Summarizing by Classifying Lead Performance}
+\input{chapters/lead-classifier}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Conclusion

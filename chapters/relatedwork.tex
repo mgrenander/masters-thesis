@@ -1,33 +1,149 @@
+In this chapter, we provide an overview of select extractive summarization systems and other relevant concepts. Generally, an automatic summarization system is provided with a document $D$ and returns a summary $\mathcal{S}$ which should satisfy certain properties, such as faithfulness to the original article, non-redundancy and coherence. 
 
-Modern summarization methods for news are typically
-based on neural network-based sequence-to-sequence learning
-\parencite{cnn1_kalchbrenner2014convolutional,cnn2_kim2014convolutional,rnn2_chung2014gru,ext2_2015Yin,ext3_cao2015learning,ext4_cheng2016neural,ext5_summarunner,narayan2018don,neusum}.
-In MLE-based training, extractive summarizers are 
-trained with gradient ascent to maximize the likelihood
-of heuristically-generated ground-truth binary
-labels \parencite{ext5_summarunner}. Many MLE-based models
-do not perform as well as their reinforcement 
-learning-based (RL) competitors that directly optimize ROUGE \parencite{abs5_paulus2017deep,DBLP:Narayan/2018,dong2018banditsum,DBLP:conf/aaai/WuH18}. 
-As RL-based models represent the state of the art for 
-extractive summarization, we analyze them in this paper.
+In abstractive summarization, the summary is generated token-by-token: the model typically maintains a vocabulary $V$, and at each time step $t$, it selects a word $w_t \in V$ as the next token. Abstractive summarization techniques typically must contend with large search spaces due to vocabulary sizes that are at least tens of thousands in size. Extractive summarization avoids this difficulty by creating summaries exclusively from text snippets in the source document. In the case where these snippets are sentences, an extractive summarizer can be viewed as assigning labels $y_i \in \{0, 1\}$ for each sentence $s_i$ in $D$, indicating whether $s_i$ will be included in the final summary or not.
 
-The closest work to ours is a recent study by 
-\cite{kedzie2018content} which showed that 
-MLE-based models learn a significant bias for 
-selecting early sentences when trained on news 
-articles as opposed to other domains. As much as 
-58\% of selected summary sentences come directly 
-from the lead. Moreover, when these models
-are trained on articles whose sentences
-are randomly shuffled, the performance drops 
-considerably for news domain only. While this drop 
-could be due to the destruction of position cues, 
-it may also arise because the article's coherence
-and context were lost. 
+% Multi vs. single document summarization
+Summarization tasks can also differ in the number of source documents provided. In single-document summarization, a single article is summarized, whereas in multi-document summarization, the system must condense multiple, possibly overlapping sources of information. Multi-document summarization adds an extra layer of difficulty due to the high-level of redundancy across documents. In this work, we focus on the single-document setting.
 
-In this paper, we employ finer control on the 
-distortion of sentence position, coherence, and 
-context, and confirm that performance drops are 
-mainly due to the lack of position cues. 
-We also propose the first techniques to 
-counter the effects of lead bias in neural extractive systems.
+Although this thesis focuses on news summarization, many datasets exist for other summarization domains. Some notable examples include legal domains such as patents and legislative documents \parencite{bigpatent, billsum}, medical documents \parencite{kedzie2018content, zhang2018radsum} and meeting notes \parencite{meeting-corpus}. Although these corpora provide exciting challenges, they are outside the scope of this work.
+
+In this overview, we broadly cover (1) models, (2) datasets and (3) evaluation measures relevant for extractive summarization. We assume background knowledge on several basic machine learning and NLP concepts, including:
+\begin{itemize}
+    \item Neural networks: backpropagation, gradient descent, multi-layer perceptrons (MLP), long short-term memory networks (LSTMs), convolutional neural networks (CNNs).
+    \item Natural Language Processing: ngrams, stemming, tf--idf, word embedding techniques such as Word2Vec and GloVe \parencite{word2vec, we2_pennington2014glove}.
+\end{itemize}
+
+\section{Models}
+Early summarization methods, sometimes known as ``Edmundsonian'' summarizers \parencite{afantenos2005}, commonly use handcrafted features with manually tuned weights to score and rank salient sentences from the source article. Later, more sophisticated methods started borrowing methodologies from various other optimization algorithms such as PageRank and integer linear programming. As more labelled data became available, neural network-based methods such as \cite{cheng-lapata-2016-neural} began to show prominence. In addition to better summarizing performance overall, neural methods are attractive as they typically require less feature engineering.
+
+It is important to note that the methods we present here represent a small select set of representative algorithms, and is not reflective of the entire broad field of summarization. The most relevant group of summarization systems to our approach -- neural network-based summarizers -- is presented in Section \ref{sec:neural}.
+
+\subsection{Edmundsonian Paradigm}
+% Luhn
+The earliest summarization system produces abstracts for scientific papers by computing a significance factor for each sentence \parencite{luhn}. The algorithm first removes non-content words such as `is' or `and' using a lookup table. It then stems and sorts the remaining words by frequency, marking words that rank above a threshold as significant. The significance factor of a sentence is then computed as the ratio of significant words to sentence length. If the significance factor surpasses a certain threshold, it is included in the final summary.
+
+% Edmundson
+Edmundson expanded on Luhn's work with a summarization system that incorporated 4 features in its decisions \parencite{edmundson}. It considers presence of certain cue words such as `significant' and `impossible', word frequency of non-cue words, words from the article's title and heading, and word position. A weighted linear combination of the 4 features is computed for each sentence after manually determining suitable weights, and the top-ranked sentences are chosen as the summary.
+
+\subsection{Maximum Marginal Relevance}
+% MMR
+Maximum Marginal Relevance (MMR) is another well-known summarization algorithm, especially for its ability to create summaries in a multi-document setting \parencite{mmr}. It measures relevance and novelty independently, then greedily selects sentences using a linear combination of these two metrics. The MMR formula is computed as:
+\begin{equation}
+    MMR = \argmax_{D_i \in R\setminus S} \left[\lambda Sim_1(D_i, Q) - (1 - \lambda)\max_{D_j \in S} Sim_2(D_i, D_j) \right]
+\end{equation}
+
+where $R$ is a collection of documents, $S$ is the summary so far, $D_i$ is a sentence in $R\setminus S$, $Q$ is a query vector, $\lambda$ is a hyperparameter and $Sim_1, Sim_2$ are similarity metrics, possibly identical. The algorithm greedily maximizes this formula for each sentence in the source document until the target length is achieved.
+
+\subsection{MEAD}
+% MEAD
+The MEAD summarization system also focuses on the multi-document setting, but with a document-clustering approach \parencite{mead-radev}. It relies on a document-clustering algorithm named CIDR to cluster same-topic documents together. CIDR produces a vector for each cluster identified, representing the words relevant for each particular cluster. The MEAD algorithm then computes 4 features for each sentence in the source documents and scores them using a linear combination with manually-tuned weights:
+\begin{equation}
+    Score(S_i) = w_c C_i + w_p P_i + w_f F_i - w_R R_i
+\end{equation}
+where $C_i$ is a centroid value denoting the sentence's similarity to CIDR's clusters, $P_i$ is a positional value ranking earlier-occurring sentences higher, $F_i$ measures the degree of overlap with the document's first sentence and $R_S$ is a redundancy penalty term similar to MMR. Similar to MMR, sentences that maximize this score are greedily chosen until a given compression ratio is achieved.
+
+\subsection{Graph-based Summarization}
+Numerous summarization approaches have benefitted from graph-based approaches \parencite{textrank, lexrank}; we detail one of the most popular models, TextRank \parencite{textrank}. TextRank differs hugely from Edmundsonian methods, avoiding manually-tuned weights through innovative use of the PageRank algorithm. It represents a document as a graph: sentences are represented as vertices, with weighted edges between sentences determined by lexical overlap. The iterative PageRank algorithm is then applied to this graph, outputting a relevance score for each sentence. The top-ranked sentences are selected to form the final summary.
+
+\subsection{ILP-based Summarization}
+% ILP
+Another family of summarization models is based around optimizing an integer linear programming problem \parencite{mcdonald2007study,clarke2008global,ilp-gillick}. We explain \cite{mcdonald2007study}'s approach, one of the earliest ILP-based summarization models. He formulates summarization as a global inference problem based on maximizing relevance while minimizing redundancy, subject to a length constraint. Given a document $\mathbf{D} = \{t_1,\dots,t_n\}$, a relevance function $Rel$, a redundancy function $Red$, and length constraint $K$, the optimal summary can be computed as:
+\begin{align}
+    S &= \argmax_{S \subseteq \mathbf{D}} \sum_{t_i \in S} Rel(i) - \sum_{t_i,t_j \in S,\ i < j} Red(i,j) \\
+    &\text{such that} \sum_{t_i \in S} l(i) \leq K
+\end{align}
+where $l(i)$ is the length of $t_i$. After demonstrating that the problem is NP-hard, the author then formulates 2 approximate solutions using a greedy approach similar to MMR and dynamic programming. An exact solution can also be extracted by using an integer linear programming approach, where sentence selection is formulated as a set of linear constraints.
+
+\subsection{Probabilistic Methods}
+% SumBasic
+SumBasic \parencite{sumbasic} is another well-known unsupervised summarization method. SumBasic assigns an initial probability to each word in a document based on word frequency, and ranks each sentence by the average word probability. After choosing the top-ranked sentence, SumBasic tackles redundancy issues by squaring the probabilities of each word appeared in the chosen sentence, thereby reducing its likelihood of appearing in subsequent sentence rankings:
+\begin{equation}
+    p_{new}(w_i) = p_{old}(w_i)\cdot p_{old}(w_i) \text{ for all } w_i \in S_i
+\end{equation}
+where $S_i$ is the sentence chosen at time step $i$. This process is repeated until the desired summary length is achieved.
+
+% DPP
+The last non-neural summarization method we discuss is based on determinantal point processes (DPP) \parencite{kulesza2012determinantal}. DPPs define a special type of probability measure over subsets of a fixed set of $N$ elements. An essential characteristic of DPPs is that similar elements tend not to co-occur. In other words, DPPs promote diverse subsets by assigning low probability to similar pairs of elements. This characteristic lends itself naturally to extractive summarization, where non-redundancy is an important aspect. \cite{kulesza2012determinantal} adapt DPPs to extractive summarization by computing feature vectors for each sentence in a document and training a DPP in a supervised setting. They show that DPPs are an effective method for extracting diverse, representative summaries from a document.
+
+\subsection{Neural Summarization}\label{sec:neural}
+In recent years, many researchers have shifted towards summarization methods based on deep learning, where lexical representations are learned by neural networks. Although in general these models may require more computational resources and large amounts of data to train, neural models are often considered more effective summarizers provided that the evaluation domain is similar to the training setting \parencite{ext5_summarunner}.
+
+Neural-based extractive summarization methods typically comprise two steps. In the \textbf{sentence representation} step, models map raw text into some abstract representation, usually a vector. Then, in \textbf{sentence selection}, models use the content representations to rank and select which sentences should constitute the summary.
+
+% Kageback
+\cite{kageback-etal-2014-extractive} presented one of the earliest extractive neural summarization models, called \textbf{Continuous Vector Space Models}. The model first uses CW or Word2Vec vectors to represent words in the document \parencite{word2vec, cw}. Sentence representations are then created by summing a sentence's word embeddings or using a recursive auto-encoder (RAE) to combine word embeddings. The RAE aims to compress word embeddings recursively until single vector is left, representing the whole sentence. Sentence selection is performed by following the Lin-Bilmes method, in which a linear combination of coverage and diversity factors is approximately optimized \parencite{lin-bilmes-2011-class}.
+
+% NN-SE
+\cite{cheng-lapata-2016-neural} present a summarizer more tightly integrated with neural networks. After encoding the document's words with Word2Vec embeddings, they use a convolutional neural network (CNN) to create hidden representations $(s_1,\dots,s_m)$. In order to capture latent temporal information, these vectors are subsequently fed into a long short-term memory (LSTM) network to achieve sentence embeddings $(h_1,\dots,h_n)$. To extract sentences, another LSTM followed by a multi-layer neural network is used to predict which sentences should form the summary. The extractor sequentially labels each sentence, using the previous time step's decision to help inform whether or not to include the current sentence in the final summary:
+\begin{align}
+    \Bar{h}_t &= \mathrm{LSTM}(p_{t-1}s_{t-1}, \Bar{h}_{t-1})\\
+    p(y_t = 1 | D) &= \sigma(\mathrm{MLP}([\Bar{h}_{t}; h_t]))
+\end{align}
+where $[\Bar{h}_{t}; h_t]$ denotes concatenation of the two vectors.
+
+Large neural models ordinarily require large amounts of training data, which was not readily available at the time. To overcome this data paucity, the authors retrieved hundreds of thousands of news articles from the Daily Mail news archives, along with associated bullet point highlights to serve as summaries. The model is then trained using this resource.
+
+% SummaRuNNer
+\cite{ext5_summarunner}'s \textbf{SummaRuNNer} model employs two layers of bidirectional GRUs to create sentence representations. The first biGRU runs over the document's words to create word-level representations. Each sentence's word-level representations are then averaged and fed into another GRU to create sentence-level representations $(h_1,\dots,h_n)$. A document representation $\mathbf{d}$ is also computed by averaging sentence embeddings followed by a non-linear transformation.
+
+A logistic layer then classifies whether to include each sentence or not based on a variety of factors:
+\begin{equation}\label{eq:autoregressive-1}
+    p(y_j = 1 | h_j, s_j, \mathbf{d}) = \sigma\left(W_c h_j + h_j^T W_s \mathbf{d} - h_j^T W_r \tanh{(s_j)} + W_{ap} p_j^a + W_{rp}p_j^r + b \right)
+\end{equation}
+where the $W_x$ and $b$ variables represent learnable parameters.
+The ``summary-so-far'' representation $s_j$ is recursively computed by weighting each sentence representation by the probability outputted by the logistic classifier: 
+\begin{equation}\label{eq:autoregressive-2}
+    s_j = \sum_{i=1}^{j-1} h_i p(y_i = 1 | h_i, s_i, d)
+\end{equation}
+Finally, positional embeddings $p_j^a$ and $p_j^r$ indicating the absolute and relative sentence position are included as inputs to the logistic classifier.
+
+% Refresh
+\cite{DBLP:Narayan/2018} argue that minimizing a cross-entropy loss objective, as done in many previous neural models, is not ideal for supervised summarization tasks. In order to use cross-entropy loss for supervised summarization tasks, it is often necessarily to create heuristic gold labels. \cite{DBLP:Narayan/2018} note that mismatches exist between heuristic labels and true summary-worthy content, which may hurt summarization performance. Instead, they argue that directly optimizing ROUGE can prevent these errors. In order to optimize ROUGE, the authors formulate a novel objective based on the REINFORCE algorithm \parencite{williams1992simple}. Their model architecture itself is similar to \cite{cheng-lapata-2016-neural}: words are first encoded by CNN followed by a LSTM to create sentence embeddings. An LSTM followed by a softmax layer then assigns a probability score to each sentence. During training, sentences with low ROUGE scores are manually filtered to reduce the search space, and a summary is created by sampling from the remaining probabilities. After creating a summary hypothesis, the model is scored against the reference summary using ROUGE, and this score is backpropagated through the network using REINFORCE.
+
+% BanditSum
+\textbf{BanditSum} is another recent neural model trained using a reinforcement learning-based objective function. Unlike \cite{DBLP:Narayan/2018}, BanditSum does not filter the action space, and thereby samples from the true action space instead of approximating it. BanditSum employs two sets of bidirectional LSTMs to create sentence representations. After embedding words with GloVe \parencite{we2_pennington2014glove}, a word-level LSTM creates word representations of the article. For each sentence, the word-level representations are averaged and inputted into a sentence-level LSTM to create sentence representations $(h_1,\dots,h_n)$. A multi-layer perceptron then runs over the sentence representations to create \textit{sentence affinity} scores for each sentence. Similar to \cite{DBLP:Narayan/2018}, hypothesis summaries are created by sampling without replacement from the sentence affinities. After sampling $B$ distinct summaries, the extracts are scored using ROUGE and the weights are updated using the REINFORCE algorithm \parencite{williams1992simple}.
+
+\subsubsection{Language Model Pre-Training}
+Recently, summarization methods based on language model pre-training objectives have achieved state-of-the-art results. These approaches, released concurrently with our work, are particularly interesting because they tend to exhibit less lead bias, and thus provide promising directions for future research. We detail here the extractive model BertSum \parencite{bertsum}, though abstractive approaches based on large pre-training objectives also exist \parencite{lewis2019bart}.
+
+BertSum is an extractive model that uses BERT to encode sentences \parencite{bertsum}. BERT is a language representation model built with a Transformer architecture \parencite{vaswani2017attentionTransformer} and trained with a masked language modeling task. It has proven effective as an encoder for both words and sentences in many NLP tasks. \cite{bertsum} use the pre-trained BERT model to encode sentences in a document, followed by a Transformer-based decoder to rank sentences by summary-worthiness. The model is fine-tuned with a cross-entropy loss using heuristically-generated gold labels.
+
+\section{Summarization Evaluation}
+\subsection{Human Evaluation}
+Traditionally, evaluating summary quality has been performed by human judges. Reference and systems summaries are compared along multiple dimensions, such as coverage, non-redundancy and coherence. % Cite some 
+However, although human summary evaluation is usually considered to be the most conclusive method to compare summarization systems, it is often difficult to scale human summary evaluation to tens of thousands of summary judgements. Moreover, human judgement has not been standardized in the summarization community, and different authors often use incompatible metrics when evaluating summary quality. These inconsistencies complicate comparisons between different systems.
+
+\subsection{ROUGE}\label{sec:rouge}
+Driven by the difficulties of human evaluation, automatic summary evaluation has been researched for many years. The most common evaluation scheme is ROUGE \parencite{eva1_lin:2004:ACLsummarization}, a set of metrics based on measuring word overlap between the generated system summary and a reference summary. ROUGE is comprised of several individual measures, representing distinct aspects of comparison. In our experiments, we report the following metrics:
+\begin{itemize}
+    \item ROUGE-N measures the ngram overlap between the generated and reference summaries. Given a set of reference summaries $\mathcal{R} = \{\mathcal{R}_1,\dots,\mathcal{R}_m\}$ and a system summary $\mathcal{S}$, the ROUGE-N score is computed as:
+    \begin{equation}
+        \rougen(\mathcal{S}, \mathcal{R}) = \frac{\sum_{i=1}^m  \sum_{gram_N \in \mathcal{R}_i} Count_{match(\mathcal{S}, \mathcal{R}_i)}(gram_N)}{\sum_{i=1}^m \sum_{gram_N \in \mathcal{R}_i} Count(gram_N)}
+    \end{equation}
+    where $N$ is the ngram length we are considering, $gram_N$ is an ngram of length $N$, and $Count_{match(\mathcal{S}, \mathcal{R}_i)}$ is the number of matching ngrams between $\mathcal{R}_i$ and $\mathcal{S}$.
+    
+    Although the original paper describes this metric as a recall-based measure, recent models have at times reported the $\mathrm{F_1}$ score instead. This decision is usually based on the dataset and whether a summary length limit is specified. To better compare with state-of-the-art models, we compute the F1 score. In our experiments, we report both ROUGE-1 (unigram) and ROUGE-2 (bigram) metrics.
+    \item ROUGE-L scores how well the word order is respected in the reference summary. It is based on a ``\textit{union} longest common subsequence'' score $LCS_{\cup}$ between the system summary and each sentence in the reference summary \parencite{eva1_lin:2004:ACLsummarization}. 
+    Given a system summary $\mathcal{S}$ with sentences $s_1,\dots,s_v$ and a reference summary $\mathcal{R}$ with sentences $r_1,\dots,r_u$, we first create sets from the longest common subsequence (LCS) between each reference sentence $r_i$ and $\mathcal{S}$.
+    $LCS_{\cup}(r_i, \mathcal{S})$ is computed by taking the union of these sets and dividing by the total word length of $r_i$:
+    \begin{equation}
+        LCS_{\cup}(r_i, \mathcal{S}) = \frac{\vert \bigcup_{i=1}^u LCS(r_i, \mathcal{S}) \vert}{\vert r_i \vert}
+    \end{equation}
+    The recall and precision scores are then computed as:
+    \begin{equation}
+        R_{lcs} = \frac{\sum_{i=1}^u LCS_{\cup}(r_i, \mathcal{S})}{\vert\mathcal{R}\vert} \quad\text{, }\quad
+        P_{lcs} = \frac{\sum_{i=1}^u LCS_{\cup}(r_i, \mathcal{S})}{\vert\mathcal{S}\vert} 
+    \end{equation}
+    The final ROUGE-L F1 score is given by the F1 score of the above precision and recall.
+\end{itemize}
+
+\section{Datasets}
+% DUC and TAC
+The Document Understanding Conferences\footnote{\url{https://duc.nist.gov/}} (DUC) produced an annual summarization dataset from 2001--2007, before joining as a track within the Text Analysis Conferences\footnote{\url{https://tac.nist.gov/}} (TAC) \parencite{harman-over-2004-effects, dang-2006-duc, dang2008overview}. The DUC/TAC datasets consist of news articles paired with multiple human-written summaries, making these datasets an excellent resource for multi-document summarization. However, the datasets generally do not contain enough samples to train neural network-based summarization models.
+
+% CNN / Daily Mail
+The CNN / Daily Mail dataset is a large collection of news stories with associated bullet point highlights used as summaries \parencite{hermann2015teaching}. The dataset is split into 287,227/13,368/11,490 article-summary pairs for the training / development / testing datasets, making it a tremendous resource for neural methods which often require large quantities of training data for adequate generalization. The CNN / Daily Mail is especially suitable for extractive systems as the summaries are known to be quite extractive in nature -- in other words, summary content is often copied from the source document  \parencite{grusky2018newsroom}. 
+
+While other news summarization datasets exist, such as the New York Times Corpus, Newsroom and XSum \parencite{nyt-corpus, grusky2018newsroom, xsum}, they are more abstractive and hence less suitable for our purposes. 
+Gigaword is another well-known summarization dataset containing millions of news articles from several publishers \parencite{napoles-etal-2012-annotated}; however, the news articles are not paired with summaries, complicating the use of machine learning approaches.
+In all experiments, we report results using the CNN / Daily Mail dataset.

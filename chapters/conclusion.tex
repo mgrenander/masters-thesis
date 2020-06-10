@@ -1,23 +1,13 @@
-In this paper, we have presented the first 
-approaches for learning a summarization system 
-by countering the strong effect of summary-worthy 
-lead sentences. We demonstrate that recent 
-summarization systems over-exploit the inherent 
-lead bias present in news articles, to the 
-detriment of their summarization capabilities. 
-We explore two techniques aimed at learning to 
-better balance positional cues with semantic ones.
-While our auxiliary loss method achieves 
-significant improvement, we note that there is 
-a large gap which better methods can
-hope to bridge in the future.
+In this work, we have investigated summarization systems and how positional biases affect these systems' learning process. Motivated by \cite{kedzie2018content}'s work and our own experiments showing that current summarization systems are heavily affected by positional cues, we design novel methods to counter the dominance of these signals.
 
-One approach, building on ours, is to examine 
-other ways to combine loss signals \parencite{maml}, 
-and to encourage exploration \parencite{sac}. 
-We will also carry out deeper study of the properties 
-of \Dearly{} and \Dlate{} type 
-documents and use them to inform new solutions. 
-On cursory analysis, the most frequent terms in 
-\Dearly{} tend to be about UK politics, while 
-in \Dlate{} they are often related to British soccer. 
+Our first method involves augmenting an existing gradient descent-based summarization model with an auxiliary loss objective. For a given input article, this loss objective estimates each sentence's value by computing the sentence-level ROUGE score compared to the reference summary. It then encourages the model to match these sentence-value estimates using the KL divergence between the model's predictions and the estimates. We test this method with a state-of-the-art summarization system, BanditSum \parencite{dong2018banditsum}, and find that our method can significantly improve summary quality. 
+
+Although the improvements are noteworthy, the resulting model is still hampered by an overreliance on lead bias. Evidence for this lingering issue is seen in Figure \ref{fig:avg_pos}, as the oracle summarizer extracts leading sentences far less than the BanditSum+KL method. Some extensions to this method could include other algorithms to combine the loss functions such as MAML \parencite{maml}, or investigating RL methods aimed at promoting exploration such as the Soft-Actor Critic algorithm \parencite{sac}.
+
+After hypothesizing that articles with a strong vs. weak lead require different summarization strategies, we design a second novel summarization method based around classifying whether an article's lead contains summary-worthy sentences. We find that by partitioning the training dataset and training separate summarization systems on these subsets, we can achieve greater performance on both subsets. We note that in the case of the \Dearly{} subset, the model's learning is dominated by positional bias, and it learns to mimic the lead-3 baseline exactly. Training a classifier proves to be a much more difficult task, especially with regards to overfitting.
+
+% Limitations
+Assuming an accurate classifier is achievable, future summarization approaches may render this approach redundant. Emerging summarization models, such as BertSum and BART \parencite{bertsum, lewis2019bart}, have taken advantage of large unsupervised language model pre-training in their approaches. In particular, the authors of BertSum show that their method is able extract sentences further in the document compared to a competitive baseline, and that the extracted indices are more similar to an oracle summarizer. Compared to previous models such as BanditSum, BertSum is more robust with respect to lead bias effects, despite having no explicit target objective aimed at countering this damaging signal. This may mean that explicit lead bias regularization is not necessary, as long as the model can sufficiently balance positional cues with semantic ones.
+
+% Conclude: lead bias is an important factor for summarization
+Regardless of how future summarization models operate, we have shown that positional biases are an important consideration when designing summarization systems. Creating models that understand how to properly balance positional cues and value sentences correctly represents a major milestone towards truly practical summarization systems.
